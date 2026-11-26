@@ -7,9 +7,10 @@
 //   node scripts/build-cmyk.mjs --icc=icc/xxx.icc   指定目标 ICC
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
-const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), '..');
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const flag = s => args.includes(s);
 const opt = (name, dflt) => {
