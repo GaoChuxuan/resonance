@@ -296,7 +296,7 @@ const FIG_MOVE = {
 };
 
 // ---------- 篇目跨页（DESIGN-TOKENS §7.6）----------
-// 第一章前三篇各占一个跨页，各换一套「气候」：
+// 第一章前三篇与 1-6《几乎处处》各占一个跨页，各换一套「气候」：
 // 满版的东西（底色、照片、斜线）画在 overlay 层并垫在正文**下面**（merge.py 的 under 页），
 // 正文层只排文字，所以字可以压在照片上，正文度量（字号、行距、栏宽）一概不变。
 const ART_PHOTO = {
@@ -306,11 +306,14 @@ const ART_PHOTO = {
     credit: 'W.carter 摄，“Sleet and rain through a bus window on road 162”，CC BY-SA 4.0；经裁切与网点化处理，改编图同以 CC BY-SA 4.0 授权' },
   '1-3': { src: 'assets/articles/1-3.jpg', short: 'Nico le terrible · CC0',
     credit: 'Nico le terrible 摄，“Wuzhen by night 5”，CC0' },
+  '1-6': { src: 'assets/articles/1-6.jpg', short: 'STEVE WALKER · CC BY 2.0',
+    credit: 'Steve Walker Photography 摄，“IMG_8531（Tulip Bouquet）”，CC BY 2.0（Openverse / Flickr）；经黑白银盐颗粒化处理；版式设计参考 X@AarzooAly（瑞士国际主义风格）' },
 };
 const ART = {
   '1-1': { cls: 'art-night', full: true },
   '1-2': { cls: 'art-fog' },
   '1-3': { cls: 'art-mist', full: true },
+  '1-6': { cls: 'art-swiss', full: true },
 };
 // 油墨色（RGB），与 tokens.css 同值：c.ink / c.blue / c.orange / c.news / c.tint
 const RGB = { ink: [0x1D, 0x1D, 0x1B], blue: [0x45, 0x8C, 0xEE], orange: [0xED, 0x72, 0x07], news: [0xF2, 0xB7, 0x05], tint: [0xE6, 0xF1, 0xFF] };
@@ -341,6 +344,31 @@ function artOpener(a, kicker, tags, who) {
       <div class="k">${kicker}　${tags}</div>
       <div class="credit">图　${esc(ph.short)}</div>
     </header>`;
+  if (a.id === '1-6') return `
+    <header class="opener aop">
+      <div class="sw-top"><span>${kicker} // ${FORM_EN[a.form] || ''}</span><span>RESONANCE · VOL. 02</span></div>
+      <div class="sw-poster">
+        <div class="sw-band top">
+          <div class="sw-cell">ALMOST EVERYWHERE<br>MEASURE ZERO<br>LEBESGUE<br>POETRY 06<br>OPEN CALL<span class="gap"></span>// 06</div>
+          <div class="sw-cell c">RESONANCE 02</div>
+          <div class="sw-cell r">CH 01 LITERATURE<br>XUAN DU<br>10:00 — 06:00<br>SWISS GRID<br>MONOCHROME<span class="gap"></span>26</div>
+        </div>
+        <div class="sw-band mid">
+          <div class="sw-cell">EXISTENCE<br>WITHOUT THICKNESS<br>REALITY<br>WITHOUT WEIGHT<br>CONTINUUM<span class="gap"></span>// AE</div>
+          <div class="sw-cell c"><span class="cn-title">几乎处处</span><span class="en-sub">ALMOST EVERYWHERE · 泫渡</span></div>
+          <div class="sw-cell r">HEIDEGGER<br>NIETZSCHE<br>RATIONALS IN R<br>DENSE SET<br>ARCHIVE<span class="gap"></span>06</div>
+        </div>
+        <div class="sw-band bot">
+          <div class="sw-cell">TONGXIANG HIGH<br>STUDENT JOURNAL<br>WINTER 2026<br>OPEN CALL<br>MONOCHROME<span class="gap"></span>// 01</div>
+          <div class="sw-cell c">POETRY 06</div>
+          <div class="sw-cell r">DESIGN REF<br>X@AarzooAly<br>TULIP STUDY<br>CC BY 2.0<br>SWISS GRID<span class="gap"></span>26</div>
+        </div>
+      </div>
+      <div class="sw-bot">
+        <span class="ref"><b>DESIGN REF:</b> X@AarzooAly · SWISS INTERNATIONAL STYLE</span>
+        <span><b>PHOTO:</b> ${esc(ph.short)}</span>
+      </div>
+    </header>`;
   return '';
 }
 
@@ -360,6 +388,10 @@ function artFrag(a, frag) {
     frag = frag.replace(/<p>“今日观察：([\s\S]*?)”<\/p>/, (m, s) =>
       `<div class="record"><div class="rh"><b>交班记录</b><span>五路康复环线　第二天</span></div><p>“今日观察：${s}”</p></div>`);
     frag = frag.replace('<p>“他们看上去，都很高兴。”</p>', '<p class="addendum">“他们看上去，都很高兴。”</p>');
+  }
+  if (a.id === '1-6') {
+    // 标头单独放在 .text 之前（通过 coda/preText 结构，避免被 transform.js 的 stripHead 误当成原稿标题删掉）
+    return frag;
   }
   return frag;
 }
@@ -419,6 +451,21 @@ function artSheets(map, pos) {
       // 正文页：同一张暖白纸（只有纸纹，150 dpi 足够）
       rest.forEach((p, i) => { out[p] = { html: imgTag(img(`1-3-paper-${i + 1}`, { seed: 30 + i, dpi: 150, quality: 82 }), full) }; });
     }
+    if (id === '1-6') {
+      const [p0, ...rest] = pages;
+      const n = img('1-6-photo', {
+        kind: 'swiss-photo', photo,
+        out_w_mm: 154, out_h_mm: 212,
+        fit: 'contain_dark', anchor_y: 0.94, pad_x: 0.0,
+        dpi: 300, lum_weights: [0.58, 0.34, 0.08],
+        shadow_crush: 0.05, contrast: 1.52, gamma: 0.76,
+        black_floor: 0.10, white_ceil: 0.95, vignette: 0.16, grain: 0.032, seed: 16,
+      });
+      out[p0] = { html: `<div class="swiss-bg"></div>` + imgTag(n, [31, 39, 154, 212]), swiss: true };
+      rest.forEach(p => {
+        out[p] = { html: `<div class="swiss-bg"></div>`, noRh: true, swiss: true };
+      });
+    }
   }
   return { out, specs };
 }
@@ -426,7 +473,7 @@ function renderArt(specs) {
   fs.mkdirSync(B('art'), { recursive: true });
   for (const [name, spec] of specs) {
     fs.writeFileSync(B(`art/${name}.json`), JSON.stringify(spec));
-    const script = spec.kind === 'orb' ? 'orb-art.py' : 'chapter-art.py';
+    const script = spec.kind === 'swiss-photo' ? 'swiss-photo.py' : (spec.kind === 'orb' ? 'orb-art.py' : 'chapter-art.py');
     execFileSync('python', ['-I', path.join(ROOT, 'scripts', script), B(`art/${name}.json`), B(`art/${name}.jpg`)], { cwd: ROOT });
   }
 }
@@ -546,6 +593,9 @@ function article(a) {
   const total = articles.filter(x => x.ch === a.ch).length;
   const longT = [...a.title].length > 12;
   const who = a.author ? `${esc(a.author)}${a.author_note ? `<span>${esc(a.author_note)}</span>` : ''}` : '';
+  const preText = a.id === '1-6'
+    ? `<div class="swiss-rh-head"><span><b class="red">06 //</b> 几乎处处</span><span class="sub">ALMOST EVERYWHERE · 泫渡</span></div>`
+    : '';
   return `
   <section class="article ${a.serif ? 'serif' : 'sans'} ${a.verse ? 'verse' : ''}${single ? ' single' : ''}${art ? ` art ${art.cls}${art.full ? ' full' : ''}` : ''}" id="a-${a.id}" data-id="${a.id}" data-form="${a.form}"
      data-strip='${esc(JSON.stringify(a.strip_lines))}' style="--club:${clubVar(a.clubs[0])}">
@@ -560,7 +610,7 @@ function article(a) {
       <div class="rule"></div>
       <div class="byline"><div class="who">${who}</div><div class="tags">${tags}</div></div>
     </header>`}
-    <div class="text"></div>${coda}
+    ${preText}<div class="text"></div>${coda}
     <template class="raw">${frag}</template>
   </section>`;
 }
@@ -608,7 +658,7 @@ function overlayHtml(map, frontPages, arts = {}) {
       inner += chapterSheet(o.ch, right);
       // 章扉页页脚带：通栏细线，切口侧页码、订口侧「# 章名」（纸面上，墨色）
       inner += `<div class="strip ${right ? 'r' : 'l'}"><span class="tagc"># ${CHAPTERS[o.ch].cn}　${CHAPTERS[o.ch].en}</span><span>${folio}</span></div>`;
-    } else if (folio) inner += `<div class="folio ${right ? 'r' : 'l'}${art && art.dark ? ' inv' : ''}"><i></i>${folio}</div>`;
+    } else if (folio) inner += `<div class="folio ${right ? 'r' : 'l'}${art && art.dark ? ' inv' : ''}${art && art.swiss ? ' swiss' : ''}"><i></i>${folio}</div>`;
     // running head
     if (p > FRONT && o && !isStart && o.kind === 'article' && !(art && art.noRh)) {
       // 书眉：CHAPTER 02 ESSAY 05　标题
@@ -618,7 +668,7 @@ function overlayHtml(map, frontPages, arts = {}) {
     // thumb tab (right pages of articles)
     if (p > FRONT && o && o.kind === 'article' && right) {
       const idx = CLUB_ORDER.indexOf(o.a.clubs[0]);
-      inner += `<div class="tab" style="top:calc(23mm + ${idx} * 34pt);background:${clubVar(o.a.clubs[0])}"></div>`;
+      inner += `<div class="tab" style="top:calc(23mm + ${idx} * 34pt);background:${art && art.swiss ? '#111111' : clubVar(o.a.clubs[0])}"></div>`;
     }
     // page ii 的社团色条改由 .fm-bars .legend 在正文层绘制，overlay 不再重复
     pages += `<div class="sheet">${inner}</div>`;

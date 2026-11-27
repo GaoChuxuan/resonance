@@ -67,3 +67,76 @@
 .art-mist .coda { margin-top: 22.5pt; padding-top: 15pt; border-top: var(--rule-hair) solid var(--c-k45); display: flex; justify-content: flex-end; }
 .art-mist .coda p { writing-mode: vertical-rl; height: 255pt; margin: 0; font: 500 10.5pt/22.5pt "SHSerif", serif; letter-spacing: .12em; text-align: justify; font-feature-settings: "vpal"; }
 .art-mist .aop .k b { margin-inline-start: .8em; }
+
+/* ---------- 1-6 几乎处处 · 瑞士国际主义单篇跨页（Google Sans + 银盐黑白花卉） ---------- */
+.swiss-bg { position: absolute; left: 0; top: 0; width: 216mm; height: 303mm; background: #F2F2F0; }
+.folio.swiss { color: #111111; }
+.folio.swiss i { background: #111111; }
+
+/* 左页海报（p18 左页版心起点 x=18mm, y=23mm；画框居中于成品页 x=31mm, y=39mm -> 相对版心 left=13mm, top=16mm） */
+.art-swiss .aop { color: #FFFFFF; }
+.art-swiss .aop .sw-top {
+  position: absolute; left: 13mm; width: 154mm; top: 10.5mm;
+  display: flex; justify-content: space-between; align-items: baseline;
+  font: 700 6.2pt/8pt "GS W", "SHS", sans-serif; letter-spacing: .12em; color: #111111;
+}
+.art-swiss .aop .sw-top span:last-child { font-weight: 500; color: #525250; }
+.art-swiss .aop .sw-poster {
+  position: absolute; left: 13mm; top: 16mm; width: 154mm; height: 212mm;
+  padding: 6.2mm 6.2mm;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+.art-swiss .aop .sw-band { display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: start; width: 100%; }
+.art-swiss .aop .sw-band.mid { margin-top: -8mm; }
+.art-swiss .aop .sw-cell {
+  font: 400 5.4pt/7pt "GS W", "SHS", sans-serif; letter-spacing: .07em;
+  color: rgba(255,255,255,0.92); text-transform: uppercase;
+}
+.art-swiss .aop .sw-cell.c { text-align: center; font-weight: 700; letter-spacing: .14em; font-size: 5.8pt; }
+.art-swiss .aop .sw-cell.r { text-align: right; }
+.art-swiss .aop .sw-cell .gap { display: block; height: 6pt; }
+.art-swiss .aop .sw-cell .cn-title {
+  display: block; font: 700 13pt/16pt "SHS", sans-serif; letter-spacing: .26em;
+  color: #FFFFFF; margin-right: -.26em;
+}
+.art-swiss .aop .sw-cell .en-sub {
+  display: block; margin-top: 2.5pt; font: 500 5.2pt/7.5pt "GS W", "SHS", sans-serif;
+  letter-spacing: .14em; color: rgba(255,255,255,0.78);
+}
+.art-swiss .aop .sw-bot {
+  position: absolute; left: 13mm; width: 154mm; top: 230.5mm;
+  padding-top: 3pt; border-top: .25pt solid #8C8C88;
+  display: flex; justify-content: space-between; align-items: baseline;
+  font: 400 5.6pt/8pt "GS W", "SHS", sans-serif; letter-spacing: .08em; color: #525250;
+}
+.art-swiss .aop .sw-bot b { font-weight: 700; color: #111111; }
+.art-swiss .aop .sw-bot .ref b { color: #D92B1B; }
+
+/* 右页（p19）：显性瑞士双栏网格诗歌 + 底部注释，整体收于一页 */
+.art-swiss.verse .text {
+  margin-left: 0; width: 100%;
+  column-count: 2; column-gap: var(--col-gap); column-rule: .35pt solid #D0D0CC;
+  column-fill: balance;
+}
+.art-swiss.verse .swiss-rh-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 5pt 0; margin-bottom: 14pt;
+  border-top: 1pt solid #111111; border-bottom: .5pt solid #111111;
+  font: 700 7.2pt/10pt "GS W", "SHS", sans-serif; letter-spacing: .12em; color: #111111;
+}
+.art-swiss.verse .swiss-rh-head .red { color: #D92B1B; margin-right: 4pt; }
+.art-swiss.verse .swiss-rh-head .sub { font-weight: 500; color: #525250; }
+.art-swiss.verse .text p {
+  font: 400 10pt/19pt "SHSerif", serif; color: #111111;
+  text-indent: 0; text-align: left;
+}
+.art-swiss.verse > .notes {
+  margin-top: 22pt; padding-top: 8pt;
+  border-top: .85pt solid #111111;
+  column-count: 2; column-gap: var(--col-gap); break-inside: avoid;
+}
+.art-swiss.verse > .notes .notes-label {
+  color: #D92B1B !important; font-family: "GS W", "SHS", sans-serif; letter-spacing: .14em;
+}
+.art-swiss.verse > .notes p { color: #4A4A48; }
+.art-swiss.verse > .notes .note-item .n { color: #111111; font-family: "GS W", sans-serif; }
