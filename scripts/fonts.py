@@ -35,13 +35,18 @@ targets = [
     ('GSF-Cond-Medium', 500, 25, 72),
     ('GSF-Cond-Bold', 700, 25, 72),
     ('GSF-Cond-Black', 900, 25, 72),
+    # 章扉页「GS W」：只动字重轴，wdth / opsz / ROND / slnt（及 GRAD）全部钉在字体默认值
+    ('GSF-W-Regular', 400, None, None),
+    ('GSF-W-Medium', 500, None, None),
+    ('GSF-W-Bold', 700, None, None),
+    ('GSF-W-Black', 900, None, None),
 ]
 for name, w, wd, op in targets:
     loc = {}
     for tag in axes:
         if tag == 'wght': loc[tag] = clamp(tag, w)
-        elif tag == 'wdth': loc[tag] = clamp(tag, wd)
-        elif tag == 'opsz': loc[tag] = clamp(tag, op)
+        elif tag == 'wdth' and wd is not None: loc[tag] = clamp(tag, wd)
+        elif tag == 'opsz' and op is not None: loc[tag] = clamp(tag, op)
         else: loc[tag] = axes[tag][1]
     f = instancer.instantiateVariableFont(TTFont(vf_path), loc, updateFontNames=False)
     f.save(os.path.join(OUT, name + '.ttf'))

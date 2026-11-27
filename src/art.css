@@ -1,0 +1,69 @@
+/* ============ 篇目跨页 · DESIGN-TOKENS §7.6 ============
+   第一章前三篇各自一套「气候」。同一个文件给两层用：
+   - 正文层（book.html）：.article.art 的开篇与文字结构，正文字号 / 行距 / 栏宽一律不动
+   - overlay 层（overlay.html）：满版底色、网点照片、斜线，在 merge.py 里垫到正文下面
+   只用实色，不用透明度、渐变；照片里的网点、雾化都在位图里（scripts/chapter-art.py）。 */
+
+/* ---------- overlay 层 ---------- */
+.artimg { position: absolute; display: block; }
+.night { position: absolute; left: 0; top: 0; width: 216mm; height: 303mm; background: var(--c-ink); }
+.fog { position: absolute; left: 0; top: 0; width: 216mm; background: var(--c-tint); }
+.beam { position: absolute; left: 0; top: 0; width: 216mm; height: 303mm; overflow: hidden; }
+.beam line { stroke: var(--c-news); stroke-width: .35; }           /* 0.35 mm ≈ 1 pt，全书最粗线 */
+.folio.inv, .rh.inv { color: var(--c-paper); }
+.folio.inv i { background: var(--c-k70); }
+
+/* ---------- 正文层：共用 ---------- */
+.article.art .opener.aop { height: var(--opener-h); position: relative; display: block; }
+.article.art.full .opener.aop { height: var(--block-h); }          /* 开篇独占照片页，正文从下一页起 */
+.aop .k { position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: space-between; font: var(--t-tag); letter-spacing: .1em; }
+.aop .k .tags { display: flex; gap: 10pt; }
+.aop .k .tags b { font: var(--t-tag); letter-spacing: .1em; }
+.aop .credit { position: absolute; font: 400 6.5pt/7.5pt "GS W", "SHS", sans-serif; letter-spacing: .02em; }
+.aop .title { margin: 0; font-feature-settings: "palt"; }
+
+/* ---------- 1-1 在铁路口 · 夜里的白光 ---------- */
+/* 左页：满版夜景（墨 + 车灯黄双色网），标题压在夜空里；右页：墨底反白正文，车灯黄斜线从照片里的车头穿过订口 */
+.art-night .aop { color: var(--c-paper); }
+.art-night .aop .k { color: var(--c-paper); }
+.art-night .aop .k .tags b { color: var(--c-news) !important; }
+.art-night .aop .title { position: absolute; left: -4pt; top: 52.5pt; font: 900 84pt/90pt "SHSerif", serif; letter-spacing: .06em; }
+.art-night .aop .who { position: absolute; left: 0; top: 157.5pt; font: 700 10pt/15pt "SHS", sans-serif; letter-spacing: .04em; }
+.art-night .aop .who span { font-weight: 500; color: var(--c-k45); margin-left: 8pt; }
+.art-night .aop .credit { left: 0; bottom: 0; color: var(--c-k45); }
+.art-night .text { color: var(--c-paper); }
+.art-night .pull { column-span: all; height: calc(var(--bl) * 29); position: relative; }   /* 正文压到页底，上方留给引语与光线 */
+.art-night .text .pull p {
+  position: absolute; right: 0; bottom: 30pt; width: max-content;
+  font: 600 20pt/30pt "SHSerif", serif; letter-spacing: .02em; color: var(--c-news);
+  text-indent: 0; text-align: left; font-feature-settings: "palt";
+}
+
+/* ---------- 1-2 明天见 · 起雾的车窗 ---------- */
+/* 雾蓝底（overlay）铺到反转那一行之前；开篇是蓝色单色网的雨雪车窗，标题纸白压在照片上 */
+.art-fog .aop { color: var(--c-paper); }
+.article.art-fog .opener.aop { height: calc(var(--bl) * 28); }               /* 照片开篇加高到 420 pt */
+.art-fog .aop .k { color: var(--c-blue-deep); }
+.art-fog .aop .k .tags b { color: var(--c-blue-deep) !important; }
+.art-fog .aop .title { position: absolute; left: -2pt; top: 90pt; font: 500 66pt/75pt "SHSerif", serif; letter-spacing: .14em; color: var(--c-paper); }
+.art-fog .aop .who { position: absolute; left: 0; top: 195pt; font: 700 10pt/15pt "SHS", sans-serif; letter-spacing: .08em; }
+.art-fog .aop .credit { right: 0; top: 408pt; color: var(--c-blue-deep); }   /* 照片下沿与正文之间的雾蓝空隙里 */
+.art-fog .fogline { column-span: all; height: var(--bl); }
+.art-fog .text p.bigline { column-span: all; text-indent: 0; text-align: center; margin: 15pt 0; font: 600 30pt/45pt "SHSerif", serif; letter-spacing: .3em; color: var(--c-blue-deep); }
+.art-fog .record { margin: 7.5pt 0; padding: 6pt 8pt 7.5pt; border: var(--rule-thin) solid var(--c-blue-deep); break-inside: avoid; }
+.art-fog .record .rh { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 3.75pt; margin-bottom: 3.75pt; border-bottom: var(--rule-hair) solid var(--c-blue-deep); color: var(--c-blue-deep); }
+.art-fog .record .rh b { font: 700 8pt/11.25pt "SHS", sans-serif; letter-spacing: .2em; }
+.art-fog .record .rh span { font: 500 7pt/11.25pt "SHS", sans-serif; letter-spacing: .06em; }
+.art-fog .text .record p { text-indent: 0; font: 400 8.75pt/15pt "SHS", sans-serif; }
+.art-fog .text p.addendum { text-indent: 0; text-align: right; font: 600 9.6pt/15pt "SHSerif", serif; color: var(--c-blue-deep); }
+
+/* ---------- 1-3 半片水，半城雾 · 雾里的第一盏灯 ---------- */
+/* 左页：乌镇夜河（墨 + 灯火橙双色网），上端网点渐稀化进纸色成雾，竖排大标题压在雾里；水面叠一层细网 */
+.art-mist .aop .title { position: absolute; right: -2pt; top: 0; writing-mode: vertical-rl; font: 900 54pt/66pt "SHSerif", serif; letter-spacing: .1em; color: var(--c-ink); }
+.art-mist .aop .title span { display: block; }
+.art-mist .aop .title span + span { margin-top: 108pt; }                /* 第二列错落下沉两字 */
+.art-mist .aop .k { left: auto; right: 146pt; top: 4pt; writing-mode: vertical-rl; display: block; color: var(--c-k70); }
+.art-mist .aop .credit { left: 0; bottom: 0; color: var(--c-paper); }
+.art-mist .coda { margin-top: 22.5pt; padding-top: 15pt; border-top: var(--rule-hair) solid var(--c-k45); display: flex; justify-content: flex-end; }
+.art-mist .coda p { writing-mode: vertical-rl; height: 255pt; margin: 0; font: 500 10.5pt/22.5pt "SHSerif", serif; letter-spacing: .12em; text-align: justify; font-feature-settings: "vpal"; }
+.art-mist .aop .k b { margin-inline-start: .8em; }

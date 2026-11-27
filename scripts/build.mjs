@@ -64,6 +64,14 @@ const esc = s => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(
 const clubVar = c => `var(${CLUBS[c].v})`;
 
 // ---------- HTML parts ----------
+// 正扉页字标：RE— / SON / —ANCE 逐字落在格子里（[字, 列, 行]），参照宽字距断词海报
+const TITLE_GRID = [['R', 0, 0], ['E', 1, 0], ['–', 2, 0], ['S', 1, 1], ['O', 2, 1], ['N', 3, 1],
+  ['–', 1, 2], ['A', 2, 2], ['N', 3, 2], ['C', 4, 2], ['E', 5, 2]];
+// 正扉页底图：颗粒渐变光球 + 竖条半透明磨砂层（scripts/orb-art.py），色标取刊物色板（橙 → 音乐社橙 → 哲学社紫 → 信号蓝 → 深蓝）
+const TITLE_ORB = { kind: 'orb', bg: [0xE6, 0xF1, 0xFF],
+  stops: [[0, [0xED, 0x72, 0x07]], [0.22, [0xF0, 0x8A, 0x24]], [0.5, [0x7A, 0x5B, 0xD6]], [0.78, [0x45, 0x8C, 0xEE]], [1, [0x2F, 0x6F, 0xD6]]],
+  center: [96, 156], radius: [114, 132], edge: 0.1, angle: 12,
+  strips: [[132, 151], [151, 170], [170, 189]], grain: 0.04, seed: 3 };
 const COPY = {
   manifesto: { en: 'EVERY VOICE<br>FINDS ITS ECHO', cn: '每一个声音，都值得一次回响。' },
   tagline: 'resonate w/ you!',
@@ -73,8 +81,7 @@ function frontMatter() {
   const CLUB_LIST = ['music', 'chem', 'philo', 'news', 'math'];
   const legend = [...CLUB_LIST, 'open'].map(c =>
     `<div><i style="background:${clubVar(c)}"></i><b>${CLUBS[c].en}</b><span>${CLUBS[c].cn}</span></div>`).join('');
-  const clubsList = CLUB_LIST.map(c =>
-    `<li><i style="background:${clubVar(c)}"></i>${CLUBS[c].cn}</li>`).join('');
+  const clubsList = CLUB_LIST.map(c => `<li>${CLUBS[c].cn}</li>`).join('');   // 正扉页底边：纯白字，× 分隔
   const tocCh = ch => {
     const items = articles.filter(a => a.ch === ch).map(a => `
       <a class="toc-item" href="#a-${a.id}">
@@ -100,15 +107,13 @@ function frontMatter() {
     <div class="legend">${legend}</div>
   </div>
   <div class="page fm fm-title" id="fm-3">
-    <div class="kicker">STUDENT JOURNAL <span>/</span> ${ISSUE.en} <span>/</span> ${ISSUE.no}</div>
-    <div class="t-en">RESONANCE<sup>.</sup><i class="spark"></i></div>
-    <div class="t-cn">共鸣</div>
-    <div class="tagline">${COPY.tagline}</div>
-    <div class="credit">
-      <div class="school">浙江省桐乡市高级中学</div>
-      <ul class="clubs">${clubsList}</ul>
-      <div class="joint">联袂出品</div>
-    </div>
+    <div class="wm" aria-label="RESONANCE">${TITLE_GRID.map(([ch, c, r]) => `<i class="${ch === 'O' ? 'o' : ''}" style="left:calc(${c} * var(--wm-step));top:calc(${r} * var(--wm-row))">${ch}</i>`).join('')}</div>
+    <div class="cn">共鸣</div>
+    <div class="tl">${COPY.tagline}</div>
+    <div class="issue"><b>${ISSUE.en.split(' ')[1]}</b><i></i><span>${ISSUE.no.replace('VOL. ', 'VOL&#8194;')}</span><span>› ${ISSUE.en.split(' ')[0]}</span></div>
+    <div class="vr">浙江省桐乡市高级中学　${CLUB_LIST.map(c => CLUBS[c].cn).join(' · ')}　联袂出品</div>
+    <div class="vl">STUDENT JOURNAL　·　${COPY.manifesto.cn}</div>
+    <ul class="clubs">${clubsList}</ul>
   </div>
   <div class="page fm fm-colophon" id="fm-4">
     <div class="block">
@@ -124,6 +129,8 @@ function frontMatter() {
         <dt>排版</dt><dd>赵奕辉</dd>
         <dt>印务</dt><dd>章茹涵</dd>
         <dt>开本</dt><dd>A4（210 × 297 mm）</dd>
+        <dt>篇目配图</dt><dd>${Object.keys(ART_PHOTO).map(id => `${id}　${esc(ART_PHOTO[id].credit)}`).join('<br>')}<br>均来自 Wikimedia Commons / Openverse</dd>
+        <dt>章扉页照片</dt><dd>${Object.keys(CH_PHOTO).map(ch => `${pad(ch)}　${esc(CH_PHOTO[ch].credit)}`).join('<br>')}</dd>
       </dl>
     </div>
   </div>
@@ -135,18 +142,69 @@ function frontMatter() {
   </div>`;
 }
 
+// 章扉页（DESIGN-TOKENS §7.2）：真实风光照片做成「印刷品」——CMYK 四色网点 + 轻微套印错位 + 纸纹，
+// 底图由 scripts/chapter-art.py 生成整张出血位图；文字、圆点里的字母都由 overlay 用矢量叠在上面。
+// 版式参照两张参考图：上部纸面排章名、引语与篇目；下部照片块从订口侧偏进两栏、向切口出血；
+// 照片上压 4 × 5 个实色蓝圆，章名英文按行逐字落在圆里。
+// 引语取自本章稿件原文，一字不改，后缀出处
+const CH_QUOTE = {
+  1: { text: '恰巧，夜的幕墙上被打上了一抹白光——一列火车正缓缓驶来。', from: '在铁路口' },
+  2: { text: '数学的严格与哲学的反思，正是自然语言自我超越的两种方式。', from: '自然语言：数学与哲学的纽带' },
+};
+// 照片：只用公有领域 / CC0（出处同时印在版权页）。focus 为裁切中心（0–1）
+const CH_PHOTO = {
+  1: { src: 'assets/chapters/ch1.jpg', focus: [0.62, 0.62], credit: '“Sea of clouds”，liu qiaojun 摄，CC0' },
+  2: { src: 'assets/chapters/ch2.jpg', focus: [0.5, 0.55], credit: '“Chitina River Below the Nizina River and Chakina River Confluences (2)”，美国国家公园管理局阿拉斯加区摄，公有领域' },
+};
+// 几何（mm，原点 = 出血页左上角）。右页版心 x 23–198、y 23–277；左页版心 x 18–193，按页面中线镜像
+const CH_GEO = { photoX: 53.1, photoY: 98, photoB: 277, pitch: 35.5, r: 12, cols: 4, rows: 5, blkR: 198 };
+function chapterGeom(right) {
+  const g = CH_GEO, h = g.photoB - g.photoY;
+  const padx = (g.blkR - g.photoX - ((g.cols - 1) * g.pitch + 2 * g.r)) / 2;
+  const pady = (h - ((g.rows - 1) * g.pitch + 2 * g.r)) / 2;
+  const mx = x => right ? x : 216 - x;                       // 左页镜像
+  const circles = [];
+  for (let j = 0; j < g.rows; j++) for (let i = 0; i < g.cols; i++)
+    circles.push([+mx(g.photoX + padx + g.r + g.pitch * i).toFixed(2), +(g.photoY + pady + g.r + g.pitch * j).toFixed(2), g.r]);
+  // 左页按行仍从左往右读：镜像后每行顺序翻转回来
+  if (!right) for (let j = 0; j < g.rows; j++) circles.splice(j * g.cols, g.cols, ...circles.slice(j * g.cols, (j + 1) * g.cols).reverse());
+  const rect = right ? [g.photoX, g.photoY, 216 - g.photoX, h] : [0, g.photoY, 216 - g.photoX, h];
+  return { rect, circles };
+}
+// 生成章扉页底图（overlay 之前调用；章首页的左右由实际页序决定）
+function renderChapterArt(map) {
+  fs.mkdirSync(B('chapters'), { recursive: true });
+  for (const ch of new Set(rendered.map(a => a.ch))) {
+    const right = map.dests[`ch-${ch}`] % 2 === 1;
+    const { rect, circles } = chapterGeom(right);
+    const spec = { photo: path.join(ROOT, CH_PHOTO[ch].src), focus: CH_PHOTO[ch].focus, zoom: CH_PHOTO[ch].zoom || 1, rect, circles, circle_rgb: [0x45, 0x8C, 0xEE], seed: 10 + ch };
+    fs.writeFileSync(B(`chapters/ch-${ch}.json`), JSON.stringify(spec));
+    execFileSync('python', ['-I', path.join(ROOT, 'scripts', 'chapter-art.py'), B(`chapters/ch-${ch}.json`), B(`chapters/ch-${ch}.jpg`)], { cwd: ROOT });
+  }
+}
+// 正文层只留一张空页和锚点（目录链接、页码回填都靠 #ch-N）。
+// 满版内容画在 overlay 层：正文层里任何超出版心的元素都会让 Chrome 把整份文档等比缩小，
+// 往上溢出的底色还会画到前一页底部
 function chapterOpener(ch) {
-  const list = articles.filter(a => a.ch === ch).map(a => `<div><b>${pad(a.seq)}</b><span>${esc(a.title)}</span></div>`).join('');
   return `
-  <section class="page chapter-opener" id="ch-${ch}" data-ch="${ch}">
-    <div class="num">${pad(ch)}<i class="spark"></i></div>
-    <div class="names">
+  <section class="page chapter-opener" id="ch-${ch}" data-ch="${ch}"></section>`;
+}
+// overlay 里的章扉页：底图 + 与正文版心同位的 .blk（右页订口在左 23 mm，左页 18 mm）+ 圆里的字母
+function chapterSheet(ch, right) {
+  const list = articles.filter(a => a.ch === ch).map(a => `<div><b>${pad(a.seq)}</b><span>${esc(a.title)}</span></div>`).join('');
+  const q = CH_QUOTE[ch];
+  const { circles } = chapterGeom(right);
+  const letters = [...CHAPTERS[ch].en].map((L, i) => circles[i]
+    ? `<i style="left:${circles[i][0]}mm;top:${circles[i][1]}mm">${esc(L)}</i>` : '').join('');
+  return `<div class="cho" data-ch="${ch}"><img class="art" src="chapters/ch-${ch}.jpg" alt="">
+    <div class="blk" style="left:${right ? 23 : 18}mm">
+      <div class="k">CHAPTER ${pad(ch)}</div>
       <div class="cn">${CHAPTERS[ch].cn}</div>
-      <div class="en">${CHAPTERS[ch].en}</div>
-      <div class="rule"></div>
+      <div class="en">${CHAPTERS[ch].en[0]}${CHAPTERS[ch].en.slice(1).toLowerCase()}</div>
+      ${q ? `<div class="quote">${esc(q.text)}<span>——《${esc(q.from)}》</span></div>` : ''}
       <div class="list">${list}</div>
     </div>
-  </section>`;
+    <div class="letters">${letters}</div></div>`;
 }
 
 // 2-3 表里的五个生僻字、正文的三处括号注音，都在 scripts/rare-glyphs.mjs 里处理
@@ -218,8 +276,160 @@ const FIG_REF = {
 
 // 竖幅肖像默认不绕排（绕排会把行宽挤窄，Chrome 把浮动图推到页顶时还会留空洞），
 // 但单栏篇目里 60 mm 宽的肖像绕排后仍有 100 mm 行宽，值得省下近 80 mm 版面。
-// 需要绕排的图在这里点名，transform.js 看到 data-float 就跳过「只绕横幅」的默认判断。
-const FIG_FLOAT = ['2-5/image2.png'];
+// 在这里逐张点名，覆盖 transform.js「只绕横幅」的默认判断：1 = 强制绕排，0 = 不绕排
+//   2-5 图3（四种平均数的星形示意）：方图默认会绕排，缩到 44% 栏宽后图里的 H/G/A/Q 标注认不出，
+//   紧跟的 M_p 公式又放不进图侧、被推到图下，左边空出一块 → 改为按原稿尺寸居中出图
+const FIG_FLOAT = { '2-5/image2.png': 1, '2-5/image2.jpeg': 0 };
+
+// 插图挪锚点：{ 篇号: [[图文件, 挪到哪一段之前（该段开头的原文片段）], …] }
+// 浮动图挂在哪一段，就从哪一段的位置起排；挂点离页底太近时，整张图连同图注会被推到下一页顶，
+// 而紧随其后的独立公式比图侧剩余行宽还宽、排不进图侧，只能落到图下，留下一个空洞。
+//   2-5 洛必达肖像：原稿挂在「小明：0 啊……」，离页底只剩约 174 pt，放不下 208 pt 的图块，
+//   跳页后第 43 页左上空出约 190 pt × 330 pt。改挂到公式之后「其中 f(x)、g(x) 均为函数」那段：
+//   这段说明有十来行，正好贴着肖像排满，公式本身留在上一页底/本页顶通栏
+//   2-5 图3：挪到 M_p 公式之后、结尾「初开天元……」之前，作为整篇的收束图
+const FIG_MOVE = {
+  '2-5': [
+    ['image2.png', '<p>其中<span class="math inline">f(x)'],
+    ['image2.jpeg', '<p><strong>初开天元'],
+  ],
+};
+
+// ---------- 篇目跨页（DESIGN-TOKENS §7.6）----------
+// 第一章前三篇各占一个跨页，各换一套「气候」：
+// 满版的东西（底色、照片、斜线）画在 overlay 层并垫在正文**下面**（merge.py 的 under 页），
+// 正文层只排文字，所以字可以压在照片上，正文度量（字号、行距、栏宽）一概不变。
+const ART_PHOTO = {
+  '1-1': { src: 'assets/articles/1-1.jpg', short: 'Killarnee · CC BY-SA 4.0 · 经裁切、网点化',
+    credit: 'Killarnee 摄，“Karlsruhe at night – railroad crossing Brunnenstückweg, Karlsruhe-Rüppurr - 3”，CC BY-SA 4.0；经裁切与网点化处理，改编图同以 CC BY-SA 4.0 授权' },
+  '1-2': { src: 'assets/articles/1-2.jpg', short: 'W.carter · CC BY-SA 4.0 · 经裁切、网点化',
+    credit: 'W.carter 摄，“Sleet and rain through a bus window on road 162”，CC BY-SA 4.0；经裁切与网点化处理，改编图同以 CC BY-SA 4.0 授权' },
+  '1-3': { src: 'assets/articles/1-3.jpg', short: 'Nico le terrible · CC0',
+    credit: 'Nico le terrible 摄，“Wuzhen by night 5”，CC0' },
+};
+const ART = {
+  '1-1': { cls: 'art-night', full: true },
+  '1-2': { cls: 'art-fog' },
+  '1-3': { cls: 'art-mist', full: true },
+};
+// 油墨色（RGB），与 tokens.css 同值：c.ink / c.blue / c.orange / c.news / c.tint
+const RGB = { ink: [0x1D, 0x1D, 0x1B], blue: [0x45, 0x8C, 0xEE], orange: [0xED, 0x72, 0x07], news: [0xF2, 0xB7, 0x05], tint: [0xE6, 0xF1, 0xFF] };
+// 1-1 的车灯光线：跨页坐标（mm，左页出血左上角为原点；右页 x 在此基础上 +210，即两页成品边在订口相接）
+// 起点是左页照片里车头灯的位置，向右上斜穿订口，从右页切口上角出去
+const NIGHT_BEAM = [[114, 151], [426, 3]];
+
+// 开篇（正文层）。kicker = 「CH 01 — 01 / 10」，tags = 社团 / 体裁
+function artOpener(a, kicker, tags, who) {
+  const ph = ART_PHOTO[a.id];
+  if (a.id === '1-1') return `
+    <header class="opener aop">
+      <div class="k"><span>${kicker}</span><span class="tags">${tags}</span></div>
+      <h1 class="title">${esc(a.title)}</h1>
+      <div class="who">${who}</div>
+      <div class="credit">图　${esc(ph.short)}</div>
+    </header>`;
+  if (a.id === '1-2') return `
+    <header class="opener aop">
+      <div class="k"><span>${kicker}</span><span class="tags">${tags}</span></div>
+      <h1 class="title">${esc(a.title)}</h1>
+      <div class="who">${who}</div>
+      <div class="credit">图　${esc(ph.short)}</div>
+    </header>`;
+  if (a.id === '1-3') return `
+    <header class="opener aop">
+      <h1 class="title"><span>半片水，</span><span>半城雾</span></h1>
+      <div class="k">${kicker}　${tags}</div>
+      <div class="credit">图　${esc(ph.short)}</div>
+    </header>`;
+  return '';
+}
+
+// 文字层面的改动（不改字，只加结构）
+function artFrag(a, frag) {
+  if (a.id === '1-1') {
+    // 跨页右页上部：引语（原文句子）；车灯光线从它的右上方斜过去
+    frag = `<div class="pull"><p>记忆的胶片从来没有损坏，<br>只不过是我们的读取器早已迭代了。</p></div>\n` + frag;
+  }
+  if (a.id === '1-2') {
+    // 反转处：雾蓝底色在这里收住（位置在排版后量出，见 fogEnd），通栏断开前后两半
+    const t = '<p>白色的天花板。';
+    if (!frag.includes(t)) console.warn('ART miss 1-2 fog');
+    frag = frag.replace(t, `<div class="fogline"></div>\n${t}`);
+    frag = frag.replace('<p>“明天见。”</p>', '<p class="bigline">“明天见。”</p>');
+    // 护士交班记录排成一张记录单；末句是护士补的一笔
+    frag = frag.replace(/<p>“今日观察：([\s\S]*?)”<\/p>/, (m, s) =>
+      `<div class="record"><div class="rh"><b>交班记录</b><span>五路康复环线　第二天</span></div><p>“今日观察：${s}”</p></div>`);
+    frag = frag.replace('<p>“他们看上去，都很高兴。”</p>', '<p class="addendum">“他们看上去，都很高兴。”</p>');
+  }
+  return frag;
+}
+
+// 1-3 末段改竖排，作为整篇的收尾（从正文里取出，排在双栏之后）
+function artCoda(a, frag) {
+  if (a.id !== '1-3') return { frag, coda: '' };
+  const m = frag.match(/<p>(故乡，水的故乡[\s\S]*?)<\/p>\s*$/);
+  if (!m) { console.warn('ART miss 1-3 coda'); return { frag, coda: '' }; }
+  return { frag: frag.slice(0, m.index), coda: `<div class="coda"><p>${m[1]}</p></div>` };
+}
+
+// overlay 层：每篇跨页各页的底图与矢量装饰；返回 { 页码: { html, dark, noRh } }，并写出要渲染的底图 spec
+function artSheets(map, pos) {
+  const out = {};
+  const specs = [];
+  const pagesOf = id => {
+    const p0 = map.dests[`a-${id}`];
+    const nexts = Object.values(map.dests).filter(p => p > p0);
+    const p1 = (nexts.length ? Math.min(...nexts) : map.pages + 1) - 1;
+    return Array.from({ length: p1 - p0 + 1 }, (_, i) => p0 + i);
+  };
+  const img = (name, spec) => { specs.push([name, spec]); return name; };
+  const imgTag = (name, r) => `<img class="artimg" src="art/${name}.jpg" style="left:${r[0]}mm;top:${r[1]}mm;width:${r[2]}mm;height:${r[3]}mm" alt="">`;
+  const full = [0, 0, 216, 303];
+  for (const id of Object.keys(ART)) {
+    if (!map.dests[`a-${id}`]) continue;
+    const pages = pagesOf(id);
+    const photo = path.join(ROOT, ART_PHOTO[id].src);
+    if (id === '1-1') {
+      const [p0, ...rest] = pages;
+      const n = img('1-1-photo', { seed: 21, photos: [{ photo, focus: [0.6, 0.5], rect: full, mode: 'inks', exposure: 1.5, contrast: 1.2, lpi: 38, absorb: 0.3, density: 1,
+        inks: [{ rgb: RGB.news, src: 'warm', gain: 1.6, angle: 15, shift: [2, -1] }, { rgb: RGB.ink, src: 'dark', gain: 1.08, gamma: 0.75, angle: 45 }] }] });
+      const beam = off => `<svg class="beam" viewBox="${off} 0 216 303"><line x1="${NIGHT_BEAM[0][0]}" y1="${NIGHT_BEAM[0][1]}" x2="${NIGHT_BEAM[1][0]}" y2="${NIGHT_BEAM[1][1]}"/></svg>`;
+      out[p0] = { html: imgTag(n, full) + beam(0), dark: true };
+      rest.forEach((p, i) => { out[p] = { html: `<div class="night"></div>` + (i === 0 ? beam(210) : ''), dark: true, noRh: i === 0 }; });
+    }
+    if (id === '1-2') {
+      const r = [0, 0, 216, 166];        // 到开篇区底（版心第 405 pt）
+      const n = img('1-2-photo', { seed: 22, paper: RGB.tint, texture: false, out_rect: r, photos: [{ photo, focus: [0.5, 0.42], rect: r, mode: 'inks', contrast: 1.35, lift: 0.02, lpi: 42,
+        inks: [{ rgb: RGB.blue, src: 'dark', gain: 1.0, gamma: 1.15, angle: 45 }] }] });
+      // 雾蓝底色：从开篇一直铺到反转那一行之前（pos.fog = [页, 该行字顶距页面上缘 pt]），之后回到白纸
+      const [fp, fy] = pos.fog || [pages[pages.length - 1] + 1, 0];
+      for (const p of pages) {
+        let fog = '';
+        if (p < fp) fog = `<div class="fog" style="height:303mm"></div>`;
+        else if (p === fp) fog = `<div class="fog" style="height:calc(${fy}pt - 11pt)"></div>`;
+        out[p] = { html: fog + (p === pages[0] ? imgTag(n, r) : '') };
+      }
+    }
+    if (id === '1-3') {
+      const [p0, ...rest] = pages;
+      const n = img('1-3-photo', { seed: 23, photos: [{ photo, focus: [0.5, 0.6], rect: full, mode: 'inks', exposure: 1.15, contrast: 1.15, lpi: 40, fade: [45, 165], absorb: 0.6,
+        inks: [{ rgb: RGB.orange, src: 'warm', gain: 1.2, gamma: 1.7, angle: 15, shift: [2, -2] }, { rgb: RGB.ink, src: 'dark', gain: 1.0, gamma: 0.8, angle: 45 }] }],
+        net: { rect: [0, 205, 216, 98], pitch: 4.2, rgb: [238, 233, 222], fade: [210, 290], width: 0.09, strength: 0.6 } });
+      out[p0] = { html: imgTag(n, full), dark: true };
+      // 正文页：同一张暖白纸（只有纸纹，150 dpi 足够）
+      rest.forEach((p, i) => { out[p] = { html: imgTag(img(`1-3-paper-${i + 1}`, { seed: 30 + i, dpi: 150, quality: 82 }), full) }; });
+    }
+  }
+  return { out, specs };
+}
+function renderArt(specs) {
+  fs.mkdirSync(B('art'), { recursive: true });
+  for (const [name, spec] of specs) {
+    fs.writeFileSync(B(`art/${name}.json`), JSON.stringify(spec));
+    const script = spec.kind === 'orb' ? 'orb-art.py' : 'chapter-art.py';
+    execFileSync('python', ['-I', path.join(ROOT, 'scripts', script), B(`art/${name}.json`), B(`art/${name}.jpg`)], { cwd: ROOT });
+  }
+}
 
 // 2-8 原稿那张手写笔记（三角恒等变换）不再画成 SVG 文字：SVG 里没有分式、根号，
 // 只能写成「(tan α + tan β) / (1 − tan α tan β)」「(√3/2)」这种伪记号，字号一缩就成糊点。
@@ -269,12 +479,19 @@ function article(a) {
     const re = new RegExp(`(<img[^>]*media/${file.replace('.', '\\.')}[^>]*style=")width:[\\d.]+in(;height:[\\d.]+in)?`);
     frag = frag.replace(re, (m, p1, p2, p3) => `${p1}width:${w}in` + (h ? `;height:${h}in` : (p2 || '')));
   }
-  for (const key of FIG_FLOAT) {
+  for (const [key, on] of Object.entries(FIG_FLOAT)) {
     const [id, file] = key.split('/');
     if (id !== a.id) continue;
     const re = new RegExp(`<img(?=[^>]*media/${file.replace('.', '\\.')})([^>]*)>`);
     if (!re.test(frag)) console.warn('FIG_FLOAT miss', key);
-    frag = frag.replace(re, (m, attrs) => `<img${attrs} data-float="1">`);
+    frag = frag.replace(re, (m, attrs) => `<img${attrs} data-float="${on}">`);
+  }
+  for (const [file, before] of (FIG_MOVE[a.id] || [])) {
+    const re = new RegExp(`<img[^>]*media/${file.replace('.', '\\.')}[^>]*>`);
+    const tag = (frag.match(re) || [])[0];
+    if (!tag || frag.split(before).length !== 2) { console.warn('FIG_MOVE miss', a.id, file); continue; }
+    // 原位置只删图，段落文字留着；图单独成段插到目标段之前（transform.js 会把单图段换成 figure）
+    frag = frag.replace(tag, '').replace(before, `<p>${tag}</p>\n${before}`);
   }
   for (const [find, rep] of (TEXT_FIX[a.id] || [])) {
     if (!frag.includes(find)) console.warn('TEXT_FIX miss', a.id, find.slice(0, 20));
@@ -321,15 +538,18 @@ function article(a) {
   // 2-1 的插图比一栏还宽、塞进双栏会留出大块空白，也按单栏排
   const single = !a.verse && ((frag.match(/class="math display"/g) || []).length >= 8 || a.id === '2-1');
   if (a.id === '2-3') frag = applyRareGlyphs(frag);
+  const art = ART[a.id];
+  let coda = '';
+  if (art) { frag = artFrag(a, frag); ({ frag, coda } = artCoda(a, frag)); }
   const bar = a.clubs.map(c => `<i style="background:${clubVar(c)}"></i>`).join('');
   const tags = [...a.clubs.map(c => `<b style="color:${clubVar(c === 'news' ? 'open' : c)}">${CLUBS[c].en}</b>`), `<b>${FORM_EN[a.form] || ''}</b>`].join('');
   const total = articles.filter(x => x.ch === a.ch).length;
   const longT = [...a.title].length > 12;
   const who = a.author ? `${esc(a.author)}${a.author_note ? `<span>${esc(a.author_note)}</span>` : ''}` : '';
   return `
-  <section class="article ${a.serif ? 'serif' : 'sans'} ${a.verse ? 'verse' : ''}${single ? ' single' : ''}" id="a-${a.id}" data-id="${a.id}" data-form="${a.form}"
+  <section class="article ${a.serif ? 'serif' : 'sans'} ${a.verse ? 'verse' : ''}${single ? ' single' : ''}${art ? ` art ${art.cls}${art.full ? ' full' : ''}` : ''}" id="a-${a.id}" data-id="${a.id}" data-form="${a.form}"
      data-strip='${esc(JSON.stringify(a.strip_lines))}' style="--club:${clubVar(a.clubs[0])}">
-    <header class="opener">
+    ${art ? artOpener(a, `CH ${pad(a.ch)} — ${pad(a.seq)} / ${pad(total)}`, tags, who) : `<header class="opener">
       <div class="clubbar">${bar}</div>
       <div class="meta-top">CH ${pad(a.ch)} — ${pad(a.seq)} / ${pad(total)}</div>
       <div class="mega">${pad(a.seq)}</div>
@@ -339,8 +559,8 @@ function article(a) {
       </div>
       <div class="rule"></div>
       <div class="byline"><div class="who">${who}</div><div class="tags">${tags}</div></div>
-    </header>
-    <div class="text"></div>
+    </header>`}
+    <div class="text"></div>${coda}
     <template class="raw">${frag}</template>
   </section>`;
 }
@@ -357,6 +577,7 @@ function bookHtml() {
 <link rel="stylesheet" href="../src/tokens.css">
 <link rel="stylesheet" href="../src/fonts.css">
 <link rel="stylesheet" href="../src/book.css">
+<link rel="stylesheet" href="../src/art.css">
 <script src="../node_modules/katex/dist/katex.min.js"></script>
 </head><body>${body}
 <script src="../src/transform.js"></script></body></html>`;
@@ -364,7 +585,7 @@ function bookHtml() {
 
 // ---------- overlay (page furniture, full-bleed canvas) ----------
 const ROMAN = ['', 'i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii'];
-function overlayHtml(map, frontPages) {
+function overlayHtml(map, frontPages, arts = {}) {
   const FRONT = frontPages;
   const starts = [];
   for (const ch of new Set(rendered.map(a => a.ch))) starts.push({ p: map.dests[`ch-${ch}`], kind: 'chapter', ch });
@@ -376,31 +597,36 @@ function overlayHtml(map, frontPages) {
     const right = p % 2 === 1;
     const o = owner(p);
     const isStart = o && o.p === p;
-    let inner = '';
+    const art = arts[p];
+    let inner = art ? art.html : '';
     // folio
     let folio = '';
     if (p <= FRONT) folio = p >= 4 ? ROMAN[p] : '';
     else folio = String(p - FRONT);
-    if (folio) inner += `<div class="folio ${right ? 'r' : 'l'}"><i></i>${folio}</div>`;
+    const chStart = p > FRONT && o && o.kind === 'chapter' && isStart;
+    if (chStart) {
+      inner += chapterSheet(o.ch, right);
+      // 章扉页页脚带：通栏细线，切口侧页码、订口侧「# 章名」（纸面上，墨色）
+      inner += `<div class="strip ${right ? 'r' : 'l'}"><span class="tagc"># ${CHAPTERS[o.ch].cn}　${CHAPTERS[o.ch].en}</span><span>${folio}</span></div>`;
+    } else if (folio) inner += `<div class="folio ${right ? 'r' : 'l'}${art && art.dark ? ' inv' : ''}"><i></i>${folio}</div>`;
     // running head
-    if (p > FRONT && o && !isStart && o.kind === 'article') {
+    if (p > FRONT && o && !isStart && o.kind === 'article' && !(art && art.noRh)) {
       // 书眉：CHAPTER 02 ESSAY 05　标题
       const txt = right ? `CHAPTER ${pad(o.a.ch)} ${FORM_EN[o.a.form] || ''} ${pad(o.a.seq)}　${esc(o.a.title)}` : `RESONANCE　共鸣　${ISSUE.cn}`;
-      inner += `<div class="rh ${right ? 'r' : 'l'}">${txt}</div>`;
+      inner += `<div class="rh ${right ? 'r' : 'l'}${art && art.dark ? ' inv' : ''}">${txt}</div>`;
     }
     // thumb tab (right pages of articles)
     if (p > FRONT && o && o.kind === 'article' && right) {
       const idx = CLUB_ORDER.indexOf(o.a.clubs[0]);
       inner += `<div class="tab" style="top:calc(23mm + ${idx} * 34pt);background:${clubVar(o.a.clubs[0])}"></div>`;
     }
-    if (p > FRONT && o && o.kind === 'chapter' && isStart) {
-      inner += `<div class="tab" style="top:23mm;height:60pt;background:var(--c-blue)"></div>`;
-    }
     // page ii 的社团色条改由 .fm-bars .legend 在正文层绘制，overlay 不再重复
     pages += `<div class="sheet">${inner}</div>`;
   }
   return `<!doctype html><html><head><meta charset="utf-8">
 <link rel="stylesheet" href="../src/tokens.css"><link rel="stylesheet" href="../src/fonts.css">
+<link rel="stylesheet" href="../src/chapter.css">
+<link rel="stylesheet" href="../src/art.css">
 <style>
 @page { size: 216mm 303mm; margin: 0; }
 html,body{margin:0;background:none;-webkit-print-color-adjust:exact}
@@ -412,6 +638,9 @@ html,body{margin:0;background:none;-webkit-print-color-adjust:exact}
 .rh{position:absolute;top:calc(3mm + 12mm - 6pt);font:var(--t-runhead);letter-spacing:.08em;color:var(--c-k70);white-space:nowrap}
 .rh.r{right:18mm}.rh.l{left:18mm}
 .tab{position:absolute;right:0;width:calc(3mm + 4pt);height:30pt}
+.strip{position:absolute;top:calc(303mm - 3mm - 14mm - 6pt - 5pt - var(--rule-thin));display:flex;justify-content:space-between;width:var(--block-w);padding-top:5pt;border-top:var(--rule-thin) solid var(--c-k45);font:var(--t-folio);letter-spacing:.04em;font-variant-numeric:tabular-nums;color:var(--c-ink)}
+.strip .tagc{font:var(--t-runhead);letter-spacing:.08em;color:var(--c-k70)}
+.strip.r{right:18mm}.strip.l{left:18mm;flex-direction:row-reverse}
 .bar{position:absolute;bottom:0;width:26.667pt;height:calc(240pt + 3mm)}
 </style></head><body>${pages}</body></html>`;
 }
@@ -445,11 +674,22 @@ map = JSON.parse(py('scripts/pagemap.py', B('body.pdf')));
 fs.writeFileSync(B('pagemap.json'), JSON.stringify(map, null, 1));
 console.log('pages', map.pages, 'front', front, JSON.stringify(map.dests));
 
-fs.writeFileSync(B('overlay.html'), overlayHtml(map, map.dests['ch-1'] - 1));
+renderChapterArt(map);
+// 篇目跨页：先量出只有排版后才知道的位置（1-2 雾蓝底收在哪一行），再出底图
+const pos = JSON.parse(py('scripts/findtext.py', B('body.pdf'), JSON.stringify({ fog: '白色的天花板' })));
+console.log('art pos', JSON.stringify(pos));
+const { out: arts, specs: artSpecs } = artSheets(map, pos);
+// 正扉页（第 iii 页）：光球底图垫在正文下面
+artSpecs.push(['title-orb', TITLE_ORB]);
+arts[map.dests['fm-3'] || 3] = { html: '<img class="artimg" src="art/title-orb.jpg" style="left:0;top:0;width:216mm;height:303mm" alt="">' };
+renderArt(artSpecs);
+// 有底图的页：overlay 垫在正文下面
+fs.writeFileSync(B('under.json'), JSON.stringify(Object.keys(arts).map(Number)));
+fs.writeFileSync(B('overlay.html'), overlayHtml(map, map.dests['ch-1'] - 1, arts));
 const op = await browser.newPage();
 await op.goto('file:///' + B('overlay.html').replace(/\\/g, '/'));
 await op.evaluate(() => document.fonts.ready);
 await op.pdf({ preferCSSPageSize: true, printBackground: true, path: B('overlay.pdf') });
 await browser.close();
 
-console.log(py('scripts/merge.py', B('body.pdf'), B('overlay.pdf'), path.join(ROOT, 'dist')));
+console.log(py('scripts/merge.py', B('body.pdf'), B('overlay.pdf'), path.join(ROOT, 'dist'), B('under.json')));

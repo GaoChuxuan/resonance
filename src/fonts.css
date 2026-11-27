@@ -20,3 +20,9 @@
 @font-face { font-family: "SHSerif"; font-weight: 600; src: url("../fonts/NotoSerifCJKsc-SemiBold.otf"); }
 @font-face { font-family: "SHSerif"; font-weight: 700; src: url("../fonts/NotoSerifCJKsc-Bold.otf"); }
 @font-face { font-family: "SHSerif"; font-weight: 900; src: url("../fonts/NotoSerifCJKsc-Black.otf"); }
+
+/* 章扉页：Google Sans 只动字重轴（wdth / opsz / ROND / slnt 都是字体默认值），见 scripts/fonts.py 的 GSF-W-* */
+@font-face { font-family: "GS W"; font-weight: 400; src: url("../fonts/GSF-W-Regular.ttf"); }
+@font-face { font-family: "GS W"; font-weight: 500; src: url("../fonts/GSF-W-Medium.ttf"); }
+@font-face { font-family: "GS W"; font-weight: 700; src: url("../fonts/GSF-W-Bold.ttf"); }
+@font-face { font-family: "GS W"; font-weight: 900; src: url("../fonts/GSF-W-Black.ttf"); }

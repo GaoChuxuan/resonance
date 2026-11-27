@@ -1,0 +1,20 @@
+/* ============ 章扉页（overlay 层，满出血）· DESIGN-TOKENS §7.2 ============
+   底图 build/chapters/ch-N.jpg 由 scripts/chapter-art.py 生成：纸纹 + 风光照片（CMYK 网点、轻微套印错位）
+   + 实色蓝圆。这里只排矢量文字：章名、引语、篇目、圆里的字母。
+   画在 overlay 而不是正文层：正文层里超出版心的元素会让 Chrome 把整份文档等比缩小。
+   .blk 与正文版心同位，坐标按版心（496 × 720 pt）；圆里的字母按出血页坐标（mm），与底图同一套几何。
+   拉丁字一律 "GS W"：Google Sans 只动字重轴，其余可变轴都是字体默认值。 */
+.cho { position: absolute; inset: 0; color: var(--c-ink); }
+.cho .art { position: absolute; left: 0; top: 0; width: 216mm; height: 303mm; }
+.cho .blk { position: absolute; top: 23mm; width: var(--block-w); height: var(--block-h); }
+/* 上部纸面：左 6 栏章名 + 引语，右 6 栏篇目（照片从版心第 75 mm 起，即 212 pt） */
+.cho .k { position: absolute; left: 0; top: 0; font: 700 7pt/7.5pt "GS W", "SHS", sans-serif; letter-spacing: .14em; color: var(--c-blue); }
+.cho .cn { position: absolute; left: -3pt; top: 15pt; font: var(--t-chapter-cn); letter-spacing: .06em; }
+.cho .en { position: absolute; left: 0; top: 72pt; font: 500 14pt/15pt "GS W", sans-serif; letter-spacing: -.005em; color: var(--c-blue); }
+.cho .quote { position: absolute; left: 0; top: 112.5pt; width: var(--col-w); font: 500 11pt/18pt "SHS", sans-serif; letter-spacing: .02em; font-feature-settings: "palt"; text-align: justify; }
+.cho .quote span { display: block; margin-top: 3.75pt; font: 500 7.5pt/11.25pt "GS W", "SHS", sans-serif; letter-spacing: .04em; color: var(--c-k70); }
+.cho .list { position: absolute; left: calc((var(--grid-col) + var(--grid-gap)) * 6); right: 0; top: 15pt; border-bottom: var(--rule-hair) solid var(--c-k45); }
+.cho .list div { display: grid; grid-template-columns: 22pt 1fr; padding: 2.25pt 0; border-top: var(--rule-hair) solid var(--c-k45); font: 500 8.5pt/12pt "SHS", sans-serif; font-feature-settings: "palt"; }
+.cho .list b { font: 700 8pt/12pt "GS W", sans-serif; font-variant-numeric: tabular-nums; color: var(--c-blue); }
+/* 圆里的字母：章名英文按行逐字，白色 GS W 700，圆心对齐 */
+.cho .letters i { position: absolute; transform: translate(-50%, -50%); font: 700 15pt/1 "GS W", sans-serif; font-style: normal; color: var(--c-paper); }

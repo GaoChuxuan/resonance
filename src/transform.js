@@ -193,8 +193,9 @@
         // 默认只绕横幅（aspect ≤ 1.02）：竖图绕排会把行宽挤窄，被推到页顶时还会留出空洞；
         // 单张竖幅确实值得绕时，在原稿侧用 data-float 点名（如 2-5 的洛必达肖像）。
         // 表格里的图不参与绕排（百分比宽度在单元格里会缩到几毫米）
+        // data-float="0"：在 build.mjs 的 FIG_FLOAT 里点名不绕排的图
         const forceFloat = img.dataset.float === '1';
-        if (!wide && single && !p.closest('td,th')
+        if (img.dataset.float !== '0' && !wide && single && !p.closest('td,th')
             && (forceFloat || (w <= wrapLimit && aspect(img) <= 1.02))) {
           fig.classList.add('float');
           if (img.dataset.fw) fig.style.maxWidth = img.dataset.fw + '%';

@@ -1,8 +1,13 @@
 import sys, os
 from pypdf import PdfReader, PdfWriter
+from pypdf import Transformation
 from pypdf.generic import RectangleObject
+import json
 
 body, overlay, out = sys.argv[1], sys.argv[2], sys.argv[3]
+# 可选第 4 个参数：under.json（页码列表，从 1 起）。这些页的 overlay 垫在正文**下面**——
+# 满版底色 / 网点照片在 overlay 层，正文字压在上面（篇目跨页，见 build.mjs 的 ART）
+under = set(json.load(open(sys.argv[4], encoding='utf8'))) if len(sys.argv) > 4 else set()
 MM = 72 / 25.4
 W, H, BL = 216 * MM, 303 * MM, 3 * MM
 trim = RectangleObject([BL, BL, W - BL, H - BL])
@@ -14,7 +19,10 @@ assert len(rb.pages) == len(ro.pages), (len(rb.pages), len(ro.pages))
 def build(screen):
     w = PdfWriter(clone_from=body)
     for i, pg in enumerate(w.pages):
-        pg.merge_page(ro.pages[i])
+        if i + 1 in under:
+            pg.merge_transformed_page(ro.pages[i], Transformation(), over=False)
+        else:
+            pg.merge_page(ro.pages[i])
         if screen:
             pg.mediabox = trim; pg.cropbox = trim; pg.trimbox = trim; pg.bleedbox = trim
         else:
